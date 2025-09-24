@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FCG.Pagamentos.API", "src\FCG.Pagamentos\FCG.Pagamentos.API.csproj", "{9AF70020-666B-4535-AF5C-8F206331B34D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FCG.Pagamentos.Core", "src\FCG.Pagamentos.Core\FCG.Pagamentos.Core.csproj", "{9546D123-F769-4801-A21C-81146FF02180}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FCG.Pagamentos.Business", "src\FCG.Pagamentos.Business\FCG.Pagamentos.Business.csproj", "{843F278A-3F96-4930-9784-F72D3CD78344}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FCG.Pagamentos.Infra", "src\FCG.Pagamentos.Infra\FCG.Pagamentos.Infra.csproj", "{67FDD392-21C5-4F30-9474-6E9BFCF0799A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FCG.Pagamentos.Tests", "tests\FCG.Pagamentos.Tests\FCG.Pagamentos.Tests.csproj", "{3729DED4-92BD-4959-B7DC-806CA303E4E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9AF70020-666B-4535-AF5C-8F206331B34D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AF70020-666B-4535-AF5C-8F206331B34D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AF70020-666B-4535-AF5C-8F206331B34D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AF70020-666B-4535-AF5C-8F206331B34D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9546D123-F769-4801-A21C-81146FF02180}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9546D123-F769-4801-A21C-81146FF02180}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9546D123-F769-4801-A21C-81146FF02180}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9546D123-F769-4801-A21C-81146FF02180}.Release|Any CPU.Build.0 = Release|Any CPU
+		{843F278A-3F96-4930-9784-F72D3CD78344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{843F278A-3F96-4930-9784-F72D3CD78344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{843F278A-3F96-4930-9784-F72D3CD78344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{843F278A-3F96-4930-9784-F72D3CD78344}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67FDD392-21C5-4F30-9474-6E9BFCF0799A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67FDD392-21C5-4F30-9474-6E9BFCF0799A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67FDD392-21C5-4F30-9474-6E9BFCF0799A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67FDD392-21C5-4F30-9474-6E9BFCF0799A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3729DED4-92BD-4959-B7DC-806CA303E4E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3729DED4-92BD-4959-B7DC-806CA303E4E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3729DED4-92BD-4959-B7DC-806CA303E4E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3729DED4-92BD-4959-B7DC-806CA303E4E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3729DED4-92BD-4959-B7DC-806CA303E4E8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74B7D544-E3F8-4F5E-9D92-3D8C966AD389}
+	EndGlobalSection
+EndGlobal

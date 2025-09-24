@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=SenhaForte123
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - tech-network
+
+  api:
+    build: .
+    container_name: fcg-pagamentos-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=FCG_Pagamentos;User Id=sa;Password=SenhaForte123;TrustServerCertificate=True;
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - tech-network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  tech-network:

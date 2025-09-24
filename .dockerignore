@@ -1,0 +1,34 @@
+# General
+.DS_Store
+*.swp
+*.swo
+*.tmp
+*.log
+*.user
+*.suo
+*.vcxproj.user
+
+# Git
+.git
+.gitignore
+
+# Dotnet
+**/bin/
+**/obj/
+**/.vs/
+**/TestResults/
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Others
+*.coverage
+*.coveragexml
+*.trx
+*.rsuser
+*.cache
+

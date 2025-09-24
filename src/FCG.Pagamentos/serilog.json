@@ -1,0 +1,39 @@
+{
+  "Serilog": {
+    "Using": [
+      "Serilog",
+      "Serilog.Sinks.Console",
+      "Serilog.Settings.Configuration",
+      "Serilog.Enrichers.Environment",
+      "Serilog.Enrichers.Process",
+      "Serilog.Enrichers.Thread"
+    ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information"
+      }
+    },
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithProcessId",
+      "WithThreadId"
+    ],
+    "Properties": {
+      "Application": "FCG.Pagamentos.API"
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "formatter": "Serilog.Formatting.Json.JsonFormatter, Serilog",
+          "restrictedToMinimumLevel": "Information"
+        }
+      }
+    ]
+  }
+}
+
