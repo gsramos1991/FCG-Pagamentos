@@ -1,0 +1,164 @@
+trigger:
+- '*'
+
+pool:
+  name: Default_fase03
+
+resources:
+  - repo: self
+
+variables:
+  dotnetVersion: '8.x'
+  Registry: ''
+  repository: ''
+  userName: ''
+  userPassword: ''
+  appname: 'fcg-ms-pagamentos'
+  sub: ''
+
+
+stages:
+- stage: Build
+  displayName: 'Build api de pagamentos do TechChallange'
+  jobs:
+    - job: Build
+      displayName: 'Build Job'
+      pool:
+        name: Default_fase03
+      steps:
+        - task: UseDotNet@2
+          displayName: 'Use .NET SDK $(dotnetVersion)'
+          inputs:
+            packageType: 'sdk'
+            version: '$(dotnetVersion)'
+
+        - task: DotNetCoreCLI@2
+          displayName: 'Restore project'
+          inputs:
+            command: 'restore'
+            projects: '**/*.csproj'
+
+        - task: DotNetCoreCLI@2
+          displayName: 'Build Project'
+          inputs:
+            azureSubscription: 'Azure for Students(daee51f1-5014-46fe-9c71-7ff5772080da)'
+            command: 'build'
+            projects: '**/*.csproj'
+            arguments: '--no-restore --configuration $(buildConfiguration)'
+        - task: DotNetCoreCLI@2
+          displayName: 'Test project'
+          inputs:
+            azureSubscription: 'Azure for Students(daee51f1-5014-46fe-9c71-7ff5772080da)'
+            command: 'test'
+            projects: '**/*.csproj'
+            arguments: '--no-restore --configuration $(buildConfiguration)'
+       
+- stage: Development
+  displayName: 'Deploy to Development'
+  dependsOn: Build
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/qa-'))
+  jobs:
+    - deployment: Deploy
+      displayName: 'Deploy in Development'
+      environment: development
+    - job: 
+      steps: 
+        - powershell: |
+            $branch = "$(Build.SourceBranchName)".ToLower()
+            $version = $branch.Replace("qa-", "")
+            Write-Host "##vso[task.setvariable variable=dockerTag]qa-$version-$(Build.BuildId)"
+          displayName: 'Obter tag para deploy em Development'
+        
+        - task: Docker@2
+          inputs:
+            containerRegistry: 'acrfase03pagamentos'
+            repository: 'fcg-payments'
+            command: 'buildAndPush'
+            Dockerfile: '**/Dockerfile'
+            tags: '$(dockerTag)'
+
+        - task: AzureContainerApps@1
+          inputs:
+            appSourcePath: '.'
+            azureSubscription: '$(sub)'
+            acrName: 'acrfase03pagamentos'
+            acrUsername: '$(userName)'
+            acrPassword: '$(userPassword)'
+            imageToDeploy: 'acrfase03pagamentos.azurecr.io/fcg-payments:$(dockerTag)'
+            containerAppName: 'fcg-ms-pagamentos'
+            resourceGroup: 'grupo-recurso-fase-03'
+            targetPort: 8080
+
+        
+
+- stage: Staging
+  displayName: 'Deploy to Homolog'
+  dependsOn: Build
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/stage-'))
+  jobs:
+    - deployment: Deploy
+      displayName: 'Deploy in Homolog'
+      environment: staging
+    - job:
+      steps:
+        - powershell: |
+            $branch = "$(Build.SourceBranchName)".ToLower()
+            $version = $branch.Replace("stage-", "")
+            Write-Host "##vso[task.setvariable variable=dockerTag]stage-$version-$(Build.BuildId)"
+          displayName: 'Obter tag para deploy em Staging'
+        - task: Docker@2
+          inputs:
+            containerRegistry: ''
+            repository: ''
+            command: 'buildAndPush'
+            Dockerfile: '**/Dockerfile'
+            tags: '$(dockerTag)'
+
+        - task: AzureContainerApps@1
+          inputs:
+            appSourcePath: '.'
+            azureSubscription: '$(sub)'
+            acrName: 'acrfase03pagamentos'
+            acrUsername: '$(userName)'
+            acrPassword: '$(userPassword)'
+            imageToDeploy: 'acrfase03pagamentos.azurecr.io/fcg-payments:$(dockerTag)'
+            containerAppName: 'fcg-ms-pagamentos'
+            resourceGroup: ''
+            targetPort: 8080
+
+- stage: Production
+  displayName: 'Deploy to Production'
+  dependsOn: Build
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-'))
+  jobs:
+    - deployment: Deploy
+      displayName: 'Deploy in Production'
+      environment: staging
+    
+    - job: 
+      steps:
+        - powershell: |
+            $branch = "$(Build.SourceBranchName)".ToLower()
+            $version = $branch.Replace("release-", "")
+            Write-Host "##vso[task.setvariable variable=dockerTag]$version-$(Build.BuildId)-release"
+          displayName: 'Obter tag para deploy em Producao'
+
+        - task: Docker@2
+          inputs:
+            containerRegistry: ''
+            repository: ''
+            command: 'buildAndPush'
+            Dockerfile: '**/Dockerfile'
+            tags: '$(dockerTag)'
+
+        - task: AzureContainerApps@1
+          inputs:
+            appSourcePath: '.'
+            azureSubscription: '$(sub)'
+            acrName: ''
+            acrUsername: '$(userName)'
+            acrPassword: '$(userPassword)'
+            imageToDeploy: ''
+            containerAppName: ''
+            resourceGroup: ''
+            targetPort: 8080
