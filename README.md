@@ -38,6 +38,67 @@ API ASP.NET Core responsável por receber solicitações de compra, consultar/ca
   - `docker compose down` (use `-v` para remover volume do banco)
 
 ## 🗂️ Arquitetura e Pastas
+## Arquitetura da Solução
+
+Esta solução segue uma arquitetura em camadas, separando responsabilidades de API, Domínio, Infraestrutura e utilitários compartilhados. Abaixo, um panorama do fluxo e da organização das pastas.
+
+Visão geral do fluxo
+- Controller recebe a requisição → valida/mapeia DTOs → chama o Service de domínio.
+- Service aplica regras de negócio, registra eventos de domínio e orquestra persistência.
+- Repositórios acessam o banco via EF Core (DbContext) para leitura/escrita.
+- Middlewares tratam correlação de logs, medem tempo e padronizam erros.
+
+🗂️ Estrutura de pastas
+```
+fcg-pagamentos/
+├── 📁 src/
+│   ├── 📁 FCG.Pagamentos/                 # 🚀 API (ASP.NET Core)
+│   │   ├── 📁 Controllers/                # 🌐 Endpoints REST
+│   │   │   ├── PaymentController.cs
+│   │   │   └── PaymentEventsController.cs
+│   │   ├── 📁 MappingDtos/                # 🔁 DTO ↔ Domínio + criação de eventos
+│   │   ├── 📁 Middlewares/                # 🧰 Logging de requests e erros
+│   │   ├── 📁 Models/                     # 🧩 DTOs de entrada/saída
+│   │   ├── Program.cs                     # ⚙️ Bootstrap/DI + Swagger
+│   │   ├── appsettings.json               # 🔧 Configurações
+│   │   ├── appsettings.Development.json
+│   │   └── serilog.json                   # 📝 Logging (Serilog)
+│   ├── 📁 FCG.Pagamentos.Business/        # 🧠 Camada de Domínio
+│   │   ├── 📁 Interfaces/                 # 📝 Contratos (serviços/repositórios)
+│   │   ├── 📁 Model/                      # 🏷️ Entidades (Payment, Event, Item)
+│   │   ├── 📁 Services/                   # 📦 Regras de negócio
+│   │   └── 📁 Logging/                    # 🔎 Scopes/helpers de log
+│   ├── 📁 FCG.Pagamentos.Infra/           # 🗄️ Infraestrutura (EF Core)
+│   │   ├── 📁 Data/                       # 💾 DbContext + Mappings
+│   │   │   ├── ApplicationDbContext.cs
+│   │   │   └── 📁 Mappings/
+│   │   ├── 📁 Data/Repositories/          # 🧱 Repositórios (Payment, Event)
+│   │   ├── 📁 Ioc/                        # 🧩 Registro de dependências (DI)
+│   │   └── 📁 Migrations/                 # 🧬 Migrations (histórico do banco)
+│   └── 📁 FCG.Pagamentos.Core/            # 🔧 Utilitários compartilhados
+│       └── PaymentEventVersion.cs
+├── 📁 tests/
+│   └── 📁 FCG.Pagamentos.Tests/           # 🧪 Testes unitários
+│       ├── 📁 Infra/
+│       └── 📁 TestClasses/
+├── Dockerfile                             # 🐳 Imagem da API
+├── docker-compose.yml                     # 🛠️ Orquestra API + SQL Server
+├── FCG.Pagamentos.sln                     # 🧭 Solution
+└── README.md
+```
+
+Responsabilidades por camada
+- API (FCG.Pagamentos): expõe endpoints REST, integra Swagger, aplica middlewares de logging e erro, e coordena mapeamento entre DTOs e domínio.
+- Domínio (FCG.Pagamentos.Business): concentra regras de negócio, invariantes e evolução de status via eventos; define contratos (Interfaces) e entidades (Model); oferece Services coesos e testáveis.
+- Infra (FCG.Pagamentos.Infra): implementa persistência com EF Core (DbContext, mapeamentos, repositórios) e o contêiner de DI (IoC) para registrar dependências.
+- Core (FCG.Pagamentos.Core): utilidades compartilhadas (por exemplo, funções auxiliares para evolução de eventos).
+
+Padrões e decisões
+- DI/IoC centralizado na camada de Infra; API injeta apenas contratos.
+- Logging padronizado com Serilog + LogContext; escopos de log no domínio via helpers.
+- DTOs isolam API do domínio; mapeamentos ficam explícitos em `MappingDtos`.
+- EF Core como ORM, com Migrations versionando o esquema do banco.
+
 - `src`
   - `FCG.Pagamentos` (API)
     - Controllers: endpoints REST (solicitar, atualizar, listar/consultar, cancelar)
@@ -157,3 +218,9 @@ Observações:
 
 
 
+## 👥 Idealizadores do Projeto (Discord)
+- 👨‍💻 Clovis Alceu Cassaro (`cloves_93258`)
+- 👨‍💻 Gabriel Santos Ramos (`_gsramos`)
+- 👨‍💻 Júlio César de Carvalho (`cesarsoft`)
+- 👨‍💻 Marco Antonio Araujo (`_marcoaz`)
+- 👩‍💻 Yasmim Muniz Da Silva Caraça (`yasmimcaraca`)
