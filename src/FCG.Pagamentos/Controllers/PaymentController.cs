@@ -29,15 +29,14 @@ namespace FCG.Pagamentos.API.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> SolicitacaoCompra([FromBody] PaymentDto paymentDto)
         {
+            _logger.LogInformation("SolicitacaoCompra iniciada");
             using (_logger.BeginPaymentScope(nameof(PaymentController), nameof(SolicitacaoCompra), null, paymentDto?.UserId))
                 try
                 {
                     _logger.LogInformation("SolicitacaoCompra iniciada");
                     var paymentDomain = paymentDto.convertToDomain();
                     var result = await _paymentService.Adicionar(paymentDomain);
-                    await _paymentEventService.Adicionar(paymentDomain);
-
-
+                    
                     _logger.LogInformation("SolicitacaoCompra concluida");
                     return Ok(result);
                 }
@@ -125,7 +124,7 @@ namespace FCG.Pagamentos.API.Controllers
                     _logger.LogInformation("AtualizarPagamento iniciado");
                     var user = await _paymentService.ObterUsuarioPorPagamento(paymentRequest);
 
-                    if(string.IsNullOrEmpty(user))
+                    if (string.IsNullOrEmpty(user))
                     {
                         _logger.LogInformation("Pagamento não encontrado para o usuario {UserId}", paymentRequest);
                         return NotFound("Pagamento não encontrado para o usuario");

@@ -1,0 +1,44 @@
+# Estágio de Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+WORKDIR /src
+
+# Instala dependências de compilação para o Alpine
+RUN apk add --no-cache clang build-base zlib-dev
+
+COPY ["FCG.Pagamentos.sln", "./"]
+COPY ["src/FCG.Pagamentos/FCG.Pagamentos.API.csproj", "src/FCG.Pagamentos/"]
+COPY ["src/FCG.Pagamentos.Business/FCG.Pagamentos.Business.csproj", "src/FCG.Pagamentos.Business/"]
+COPY ["src/FCG.Pagamentos.Core/FCG.Pagamentos.Core.csproj", "src/FCG.Pagamentos.Core/"]
+COPY ["src/FCG.Pagamentos.Infra/FCG.Pagamentos.Infra.csproj", "src/FCG.Pagamentos.Infra/"]
+COPY ["tests/FCG.Pagamentos.Tests/FCG.Pagamentos.Tests.csproj", "tests/FCG.Pagamentos.Tests/"]
+
+RUN dotnet restore "FCG.Pagamentos.sln"
+COPY . .
+
+# PUBLISH COM TRIMMING (Mágica da redução)
+# -r linux-musl-x64: Define o runtime específico para Alpine
+# --self-contained true: Inclui apenas o necessário do .NET no binário
+# /p:PublishTrimmed=true: Remove código morto do framework
+RUN dotnet publish "src/FCG.Pagamentos/FCG.Pagamentos.API.csproj" \
+    -c Release \
+    -r linux-musl-x64 \
+    --self-contained true \
+    -o /app/out \
+    /p:PublishTrimmed=true \
+    /p:TrimMode=partial \
+    /p:PublishSingleFile=true \
+    /p:DebuggerSupport=false
+
+# Estágio Final: Imagem vazia ou mínima
+FROM alpine:3.20 AS final
+WORKDIR /app
+
+# Dependências mínimas para rodar .NET Nativo no Alpine
+RUN apk add --no-cache libstdc++ gcompat icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+COPY --from=build /app/out .
+
+EXPOSE 8080
+# Como é Single File, chamamos o executável direto (sem o "dotnet")
+ENTRYPOINT ["./FCG.Pagamentos.API"]

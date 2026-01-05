@@ -8,6 +8,7 @@ namespace FCG.Pagamentos.Business.Model
 {
     public class Payment
     {
+        public Guid OrderId { get; set; }
         public Guid PaymentId { get; set; }
         public Guid UserId { get; set; }
         public string Currency { get; set; } = "BRL";
@@ -22,10 +23,11 @@ namespace FCG.Pagamentos.Business.Model
             
         }
 
-        public Payment(Guid paymentId, Guid userId, string currency, string statusPayment, List<PaymentItem> paymentItems, decimal totalAmount, DateTime createdAt)
+        public Payment(Guid orderId, Guid paymentId, Guid userId, string currency, string statusPayment, List<PaymentItem> paymentItems, decimal totalAmount, DateTime createdAt)
         {
-            ValidarPropriedades(paymentId, userId, currency, statusPayment, paymentItems, totalAmount);
+            ValidarPropriedades(orderId, paymentId, userId, currency, statusPayment, paymentItems, totalAmount);
             ValidarValorUnitario();
+            OrderId = orderId;
             PaymentId = paymentId;
             UserId = userId;
             Currency = currency;
@@ -35,10 +37,11 @@ namespace FCG.Pagamentos.Business.Model
             Items = paymentItems;
         }
 
-        private void ValidarPropriedades(Guid paymentId, Guid userId, string currency, string statusPayment, List<PaymentItem> paymentItems, decimal totalAmount)
+        private void ValidarPropriedades(Guid orderId,Guid paymentId, Guid userId, string currency, string statusPayment, List<PaymentItem> paymentItems, decimal totalAmount)
         {
             ValidarId(paymentId);
             ValidarId(userId);
+            ValidarId(orderId);
             ValidarString(currency, nameof(currency));
             ValidarString(statusPayment, nameof(statusPayment));
             ValidarTotalAmount(totalAmount);

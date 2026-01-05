@@ -26,6 +26,7 @@ namespace FCG.Pagamentos.API.MappingDtos
         {
             return new Payment
                         (
+                            orderId: Dto.OrderId,
                             paymentId: IdPayment,
                             userId: Dto.UserId,
                             currency: Dto.Currency,

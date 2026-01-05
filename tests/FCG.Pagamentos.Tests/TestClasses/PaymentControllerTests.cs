@@ -27,7 +27,7 @@ public class PaymentControllerTests
         };
 
         _paymentService.Setup(s => s.Adicionar(It.IsAny<Payment>()))
-            .ReturnsAsync(new PaymentResponse { PaymentId = Guid.NewGuid(), StatusPayment = "PENDING", Success = true });
+            .ReturnsAsync(new PaymentResponse {OrderId = Guid.NewGuid(), PaymentId = Guid.NewGuid(), StatusPayment = "PENDING", Success = true });
 
         var result = await controller.SolicitacaoCompra(dto) as OkObjectResult;
 
