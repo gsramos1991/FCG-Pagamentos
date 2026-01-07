@@ -132,7 +132,16 @@ namespace FCG.Pagamentos.Business.Services
 
         public async Task<Payment> ObterCompras(PaymentRequest request)
         {
-            return await _paymentRepository.ObterCompras(request);
+            var comprasUsuario = await _paymentRepository.ObterCompras(request);
+
+            if(comprasUsuario == null)
+                return null;
+            
+
+            var SinalPagamento = CondicionalPagamento(comprasUsuario.TotalAmount);
+            comprasUsuario.StatusPayment = SinalPagamento;
+
+            return comprasUsuario;
         }
 
         public async Task<List<Payment>> ObterComprasPorUsuario(Guid UserId)
@@ -144,6 +153,26 @@ namespace FCG.Pagamentos.Business.Services
         public async Task<string> ObterUsuarioPorPagamento(Guid Payment)
         {
             return await _paymentRepository.ObterUsuarioPorPagamento(Payment);
+        }
+
+        public async Task<Payment> ObterComprasAtualizacao(PaymentRequest request)
+        {
+            var comprasUsuario = await _paymentRepository.ObterCompras(request);
+
+            if (comprasUsuario == null)
+                return null;
+
+            if (request.StatusPayment.Equals("PENDING", StringComparison.OrdinalIgnoreCase)) 
+            {
+                var SinalPagamento = CondicionalPagamento(comprasUsuario.TotalAmount);
+                comprasUsuario.StatusPayment = SinalPagamento;
+                request.StatusPayment = SinalPagamento;
+                await AtualizarStatusPagamento(request);
+            }
+
+            
+
+            return comprasUsuario;
         }
 
 
@@ -162,6 +191,33 @@ namespace FCG.Pagamentos.Business.Services
             };
 
             return paymentResponse;
+        }
+
+        private string CondicionalPagamento(decimal valorTotal)
+        {
+            if (valorTotal <= 0)
+            {
+                return "FAIL";
+            }
+
+            if (valorTotal > 0 && valorTotal <= 200)
+            {
+                return "ERROR";
+            }
+
+            if(valorTotal >= 201 &&  valorTotal <= 500)
+            {
+                return "PENDING";
+            }
+
+            if (valorTotal >= 1001)
+            {
+                return "SUCCESS";
+            }
+
+            return "REJECTED";
+
+
         }
     }
 }

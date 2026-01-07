@@ -16,6 +16,7 @@ namespace FCG.Pagamentos.Business.Services.Interface
         Task<IEnumerable<Payment>> ListarPagamentos(string statusPagamento);
         Task<List<Payment>> ObterComprasPorUsuario(Guid UserId);
         Task<string> ObterUsuarioPorPagamento(Guid Payment);
+        Task<Payment> ObterComprasAtualizacao(PaymentRequest request);
 
     }
 }
