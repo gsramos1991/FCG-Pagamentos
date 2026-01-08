@@ -20,7 +20,7 @@ public class PaymentRepositoryTests
         {
             new PaymentItem(Guid.NewGuid(), paymentId, Guid.NewGuid(), "Item 1", 10m, 1)
         };
-        var payment = new Payment(paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
+        var payment = new Payment(Guid.NewGuid(),paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
 
         await repo.Adicionar(payment);
 
@@ -40,7 +40,7 @@ public class PaymentRepositoryTests
         {
             new PaymentItem(Guid.NewGuid(), paymentId, Guid.NewGuid(), "Item 1", 10m, 1)
         };
-        var payment = new Payment(paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
+        var payment = new Payment(Guid.NewGuid(), paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
         await repo.Adicionar(payment);
 
         await repo.AtualizarStatusPagamento(new PaymentRequest{ PaymentId = paymentId, UserId = userId, StatusPayment = "ANALISE"});
@@ -59,7 +59,7 @@ public class PaymentRepositoryTests
         {
             new PaymentItem(Guid.NewGuid(), paymentId, Guid.NewGuid(), "Item 1", 10m, 1)
         };
-        var payment = new Payment(paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
+        var payment = new Payment(Guid.NewGuid(), paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
         await repo.Adicionar(payment);
 
         await repo.CancelarPagamento(paymentId, userId);

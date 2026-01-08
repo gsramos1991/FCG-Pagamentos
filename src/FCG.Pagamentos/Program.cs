@@ -53,7 +53,8 @@ app.UseSwaggerUI(c =>
     c.DocumentTitle = "FCG Pagamentos - Swagger";
 });
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.UseRouting();
 
 // Error and request logging middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();

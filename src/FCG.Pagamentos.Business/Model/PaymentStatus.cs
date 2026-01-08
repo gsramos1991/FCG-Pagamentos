@@ -7,7 +7,8 @@ public enum PaymentStatus
     REJECTED,
     SUCESSO,
     CANCELED,
-    ERROR
+    ERROR,
+    EXISTING_ORDER
 }
 
 public static class PaymentStatusMapper
@@ -22,6 +23,7 @@ public static class PaymentStatusMapper
             "REJECTED" or "REJEITADO" => PaymentStatus.REJECTED,
             "SUCESSO" or "APPROVED" or "APROVADO" => PaymentStatus.SUCESSO,
             "CANCELED" or "CANCELLED" or "CANCELAR" => PaymentStatus.CANCELED,
+            "EXISTING_ORDER" or "ORDEM_EXISTENTE" => PaymentStatus.EXISTING_ORDER,
             _ => PaymentStatus.ERROR
         };
     }
@@ -49,7 +51,8 @@ public enum EventType
     Payment_Error,
     Payment_Not_Found,
     Payment_Purchase_By_User,
-    Payment_Purchase_Not_Found
+    Payment_Purchase_Not_Found,
+    Paymetn_Already_Exists
 }
 
 public static class PaymentEventTypeMapper
@@ -67,6 +70,7 @@ public static class PaymentEventTypeMapper
         PaymentStatus.REJECTED => nameof(EventType.Payment_Rejected),
         PaymentStatus.SUCESSO => nameof(EventType.Payment_Approved),
         PaymentStatus.CANCELED => nameof(EventType.Payment_Cancelled),
+        PaymentStatus.EXISTING_ORDER => nameof(EventType.Paymetn_Already_Exists),
         _ => nameof(EventType.Payment_Error)
     };
 

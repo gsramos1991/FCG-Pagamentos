@@ -30,8 +30,7 @@ namespace FCG.Pagamentos.Business.Services
             }
             var LastEvent = await _paymentEventRepository.ObterUltimoEventoPorPagamento(payment.PaymentId);
             var newEventType = PaymentEventTypeMapper.FromStatusString(payment.StatusPayment);
-            if (LastEvent != null && LastEvent.EventType == newEventType)
-                return; 
+            
             var newVersion = LastEvent != null ? LastEvent.Version + 1 : 1;
             var paymentEvent = new PaymentEvent
             {

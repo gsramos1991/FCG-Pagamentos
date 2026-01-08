@@ -33,23 +33,30 @@ namespace FCG.Pagamentos.Business.Services
                 {
                     _logger.LogInformation("Adicionando pagamento");
                 }
+
+                var pagamentoExistente = await _paymentRepository.VerificaCompraExistente(payment.OrderId, payment.UserId);
+                if (pagamentoExistente != Guid.Empty)
+                {
+                    response = MontarResposta(payment.OrderId, Guid.Empty, 0, "Existing Order", -2, "Ordem de compra já existente", true);
+                    
+                    payment.StatusPayment = "EXISTING_ORDER";
+                    payment.PaymentId = Guid.Empty;
+                    await _paymentEventService.Adicionar(payment);
+                    return response;
+                }
+
                 var result = await _paymentRepository.Adicionar(payment);
                 var LastPayment = await _paymentEventService.ObterUltimoEventoPorPagamento(result.PaymentId);
-               
-                response.PaymentId = result.PaymentId;
-                response.StatusPayment = result.StatusPayment;
-                response.Success = true;
-                response.Message = "Pagamento em analise";
+
+                response = MontarResposta(payment.OrderId, result.PaymentId, payment.TotalAmount, result.StatusPayment, 1, "Pagamento em analise", true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro em Adicionar pagamento");
-                response.StatusPayment = "Error";
-                response.Success = false;
-                response.Message = $"Falha durante o processamento {ex.Message}";
+                response = MontarResposta(payment.OrderId, Guid.Empty, payment.TotalAmount, "ERROR", -1, "Falha no getway", false);
 
             }
-
+            await _paymentEventService.Adicionar(payment);
             return response;
 
         }
@@ -59,11 +66,11 @@ namespace FCG.Pagamentos.Business.Services
             var response = new PaymentResponse();
             try
             {
-               using (_logger.BeginPaymentScope(nameof(PaymentService), nameof(AtualizarStatusPagamento), paymentRequest.PaymentId, paymentRequest.UserId))
-               {
-                   _logger.LogInformation("Atualizando status do pagamento para {Status}", paymentRequest.StatusPayment);
-               }
-               await _paymentRepository.AtualizarStatusPagamento(paymentRequest);
+                using (_logger.BeginPaymentScope(nameof(PaymentService), nameof(AtualizarStatusPagamento), paymentRequest.PaymentId, paymentRequest.UserId))
+                {
+                    _logger.LogInformation("Atualizando status do pagamento para {Status}", paymentRequest.StatusPayment);
+                }
+                await _paymentRepository.AtualizarStatusPagamento(paymentRequest);
                 response.PaymentId = paymentRequest.PaymentId;
                 response.StatusPayment = paymentRequest.StatusPayment ?? "PENDING";
                 response.Success = true;
@@ -74,8 +81,8 @@ namespace FCG.Pagamentos.Business.Services
                 _logger.LogError(ex, "Erro ao atualizar status do pagamento");
                 response.Success = false;
                 response.Message = $"{ex.Message}";
-                
-                
+
+
             }
 
             return response;
@@ -125,7 +132,16 @@ namespace FCG.Pagamentos.Business.Services
 
         public async Task<Payment> ObterCompras(PaymentRequest request)
         {
-            return await _paymentRepository.ObterCompras(request);
+            var comprasUsuario = await _paymentRepository.ObterCompras(request);
+
+            if(comprasUsuario == null)
+                return null;
+            
+
+            var SinalPagamento = CondicionalPagamento(comprasUsuario.TotalAmount);
+            comprasUsuario.StatusPayment = SinalPagamento;
+
+            return comprasUsuario;
         }
 
         public async Task<List<Payment>> ObterComprasPorUsuario(Guid UserId)
@@ -137,6 +153,71 @@ namespace FCG.Pagamentos.Business.Services
         public async Task<string> ObterUsuarioPorPagamento(Guid Payment)
         {
             return await _paymentRepository.ObterUsuarioPorPagamento(Payment);
+        }
+
+        public async Task<Payment> ObterComprasAtualizacao(PaymentRequest request)
+        {
+            var comprasUsuario = await _paymentRepository.ObterCompras(request);
+
+            if (comprasUsuario == null)
+                return null;
+
+            if (request.StatusPayment.Equals("PENDING", StringComparison.OrdinalIgnoreCase)) 
+            {
+                var SinalPagamento = CondicionalPagamento(comprasUsuario.TotalAmount);
+                comprasUsuario.StatusPayment = SinalPagamento;
+                request.StatusPayment = SinalPagamento;
+                await AtualizarStatusPagamento(request);
+            }
+
+            
+
+            return comprasUsuario;
+        }
+
+
+        private PaymentResponse MontarResposta(Guid orderId, Guid PaymentId, decimal valorTotal, string StatusPayment, int statusProcesso, string message, bool sucesso)
+        {
+            var paymentResponse = new PaymentResponse()
+            {
+                OrderId = orderId,
+                PaymentId = PaymentId,
+                ProcessedAt = DateTime.Now,
+                StatusPayment = StatusPayment,
+                statusProcesso = statusProcesso,
+                TotalValue = valorTotal,
+                Message = message,
+                Success = sucesso,
+            };
+
+            return paymentResponse;
+        }
+
+        private string CondicionalPagamento(decimal valorTotal)
+        {
+            if (valorTotal <= 0)
+            {
+                return "FAIL";
+            }
+
+            if (valorTotal > 0 && valorTotal <= 200)
+            {
+                return "ERROR";
+            }
+
+            if(valorTotal >= 201 &&  valorTotal <= 500)
+            {
+                return "PENDING";
+            }
+
+            if (valorTotal >= 1001)
+            {
+                return "SUCCESS";
+            }
+
+            return "REJECTED";
+
+
         }
     }
 }

@@ -80,5 +80,16 @@ namespace FCG.Pagamentos.Infra.Data.Repositories
                                         .FirstOrDefaultAsync();
             return result ?? string.Empty;
         }
+
+        public async Task<Guid> VerificaCompraExistente(Guid OrderId, Guid userId)
+        {
+            var result = await _db.Payment.Where(w => w.OrderId == OrderId && w.UserId == userId)
+                .Select(x => x.PaymentId).FirstOrDefaultAsync();
+            if (result == Guid.Empty)
+                return Guid.Empty;
+
+
+            return result;
+        }
     }
 }

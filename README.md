@@ -3,10 +3,10 @@
 API ASP.NET Core responsável por receber solicitações de compra, consultar/cancelar pagamentos e registrar a trilha de eventos de cada pagamento. O projeto é organizado em camadas (API, Business, Infra e Core) e utiliza Entity Framework Core com SQL Server.
 
 ## ✨ Principais recursos
-- Solicitar compra, consultar e cancelar pagamentos.
-- Atualização incremental do status com base na versão do último evento.
-- Registro de eventos de domínio em cada operação (consulta, atualização, cancelamento etc.).
-- Swagger para documentação e teste rápido dos endpoints.
+- **Vínculo com Pedidos**: Cada pagamento agora está associado a um `OrderId`, garantindo rastreabilidade entre os sistemas.
+- **Gestão de Pagamentos**: Solicitar compra, consultar e cancelar pagamentos.
+- **Trilha de Eventos**: Registro de eventos de domínio em cada operação (consulta, cancelamento, etc.).
+- **Swagger**: Documentação e teste rápido dos endpoints.
 
 ## 📦 Requisitos
 - .NET 8 SDK
@@ -38,15 +38,13 @@ API ASP.NET Core responsável por receber solicitações de compra, consultar/ca
   - `docker compose down` (use `-v` para remover volume do banco)
 
 ## 🗂️ Arquitetura e Pastas
-## Arquitetura da Solução
+A solução segue uma arquitetura em camadas, separando responsabilidades de API, Domínio, Infraestrutura e utilitários compartilhados.
 
-Esta solução segue uma arquitetura em camadas, separando responsabilidades de API, Domínio, Infraestrutura e utilitários compartilhados. Abaixo, um panorama do fluxo e da organização das pastas.
-
-Visão geral do fluxo
-- Controller recebe a requisição → valida/mapeia DTOs → chama o Service de domínio.
-- Service aplica regras de negócio, registra eventos de domínio e orquestra persistência.
-- Repositórios acessam o banco via EF Core (DbContext) para leitura/escrita.
-- Middlewares tratam correlação de logs, medem tempo e padronizam erros.
+Visão geral do fluxo:
+- `Controller` recebe a requisição → valida/mapeia DTOs → chama o `Service` de domínio.
+- `Service` aplica regras de negócio, registra eventos de domínio e orquestra a persistência.
+- `Repositórios` acessam o banco via EF Core (`DbContext`) para leitura/escrita.
+- `Middlewares` tratam correlação de logs, medem tempo e padronizam erros.
 
 🗂️ Estrutura de pastas
 ```
@@ -54,143 +52,107 @@ fcg-pagamentos/
 ├── 📁 src/
 │   ├── 📁 FCG.Pagamentos/                 # 🚀 API (ASP.NET Core)
 │   │   ├── 📁 Controllers/                # 🌐 Endpoints REST
-│   │   │   ├── PaymentController.cs
-│   │   │   └── PaymentEventsController.cs
-│   │   ├── 📁 MappingDtos/                # 🔁 DTO ↔ Domínio + criação de eventos
+│   │   ├── 📁 MappingDtos/                # 🔁 Mapeamento DTO ↔ Domínio
 │   │   ├── 📁 Middlewares/                # 🧰 Logging de requests e erros
 │   │   ├── 📁 Models/                     # 🧩 DTOs de entrada/saída
-│   │   ├── Program.cs                     # ⚙️ Bootstrap/DI + Swagger
-│   │   ├── appsettings.json               # 🔧 Configurações
-│   │   ├── appsettings.Development.json
-│   │   └── serilog.json                   # 📝 Logging (Serilog)
+│   │   └── Program.cs                     # ⚙️ Bootstrap/DI + Swagger
 │   ├── 📁 FCG.Pagamentos.Business/        # 🧠 Camada de Domínio
 │   │   ├── 📁 Interfaces/                 # 📝 Contratos (serviços/repositórios)
 │   │   ├── 📁 Model/                      # 🏷️ Entidades (Payment, Event, Item)
-│   │   ├── 📁 Services/                   # 📦 Regras de negócio
-│   │   └── 📁 Logging/                    # 🔎 Scopes/helpers de log
+│   │   └── 📁 Services/                   # 📦 Regras de negócio
 │   ├── 📁 FCG.Pagamentos.Infra/           # 🗄️ Infraestrutura (EF Core)
-│   │   ├── 📁 Data/                       # 💾 DbContext + Mappings
-│   │   │   ├── ApplicationDbContext.cs
-│   │   │   └── 📁 Mappings/
-│   │   ├── 📁 Data/Repositories/          # 🧱 Repositórios (Payment, Event)
+│   │   ├── 📁 Data/                       # 💾 DbContext, Mappings e Repositórios
 │   │   ├── 📁 Ioc/                        # 🧩 Registro de dependências (DI)
 │   │   └── 📁 Migrations/                 # 🧬 Migrations (histórico do banco)
 │   └── 📁 FCG.Pagamentos.Core/            # 🔧 Utilitários compartilhados
-│       └── PaymentEventVersion.cs
 ├── 📁 tests/
 │   └── 📁 FCG.Pagamentos.Tests/           # 🧪 Testes unitários
-│       ├── 📁 Infra/
-│       └── 📁 TestClasses/
 ├── Dockerfile                             # 🐳 Imagem da API
 ├── docker-compose.yml                     # 🛠️ Orquestra API + SQL Server
-├── FCG.Pagamentos.sln                     # 🧭 Solution
 └── README.md
 ```
 
-Responsabilidades por camada
-- API (FCG.Pagamentos): expõe endpoints REST, integra Swagger, aplica middlewares de logging e erro, e coordena mapeamento entre DTOs e domínio.
-- Domínio (FCG.Pagamentos.Business): concentra regras de negócio, invariantes e evolução de status via eventos; define contratos (Interfaces) e entidades (Model); oferece Services coesos e testáveis.
-- Infra (FCG.Pagamentos.Infra): implementa persistência com EF Core (DbContext, mapeamentos, repositórios) e o contêiner de DI (IoC) para registrar dependências.
-- Core (FCG.Pagamentos.Core): utilidades compartilhadas (por exemplo, funções auxiliares para evolução de eventos).
-
-Padrões e decisões
-- DI/IoC centralizado na camada de Infra; API injeta apenas contratos.
-- Logging padronizado com Serilog + LogContext; escopos de log no domínio via helpers.
-- DTOs isolam API do domínio; mapeamentos ficam explícitos em `MappingDtos`.
-- EF Core como ORM, com Migrations versionando o esquema do banco.
-
-- `src`
-  - `FCG.Pagamentos` (API)
-    - Controllers: endpoints REST (solicitar, atualizar, listar/consultar, cancelar)
-    - MappingDtos: mapeamentos entre DTOs e domínio e criação de eventos
-    - Middlewares: request logging + error handling
-    - Configuração: Program/Swagger e appsettings/serilog.json
-  - `FCG.Pagamentos.Business` (Domínio)
-    - Model: entidades de domínio
-    - Services: regras de negócio (pagamentos e eventos)
-    - Interfaces: contratos de serviços e repositórios
-    - Logging: `Logging/LoggingScopes.cs` (helper para escopos de log)
-  - `FCG.Pagamentos.Infra` (Infraestrutura)
-    - Data: ApplicationDbContext e mapeamentos do EF Core
-    - Repositories: implementações de acesso a dados (Payment e PaymentEvent)
-    - IoC: registro de dependências (DbContext, repositórios, serviços)
-  - `FCG.Pagamentos.Core` (Core)
-    - Utilitários de apoio (evolução de eventos, etc.)
-- `tests`
-  - `FCG.Pagamentos.Tests`
-    - TestClasses: testes unitários de controllers, serviços e middlewares
-    - Infra: fábrica de DbContext para testes
-
-### Atualizações recentes (logging e middlewares)
-- API (`src/FCG.Pagamentos`)
-  - `Middlewares/RequestLoggingMiddleware.cs`: adiciona `CorrelationId`, `PaymentId` e `UserId` ao LogContext durante todo o request; logs de início/fim com tempo.
-  - `Middlewares/ErrorHandlingMiddleware.cs`: captura exceções e retorna `ProblemDetails` com `correlationId`; registra erro com contexto.
-  - `serilog.json` + `Program.cs`: configuração do Serilog (console JSON, níveis, enrichers, LogContext) e registro dos middlewares.
-- Business (`src/FCG.Pagamentos.Business`)
-  - `Logging/LoggingScopes.cs`: helper `BeginPaymentScope(...)` para incluir `ClassName`, `MethodName`, `PaymentId`, `UserId`.
-  - `Services/PaymentService.cs`, `Services/PaymentEventService.cs`: uso de `ILogger<T>` + helper para logs padronizados.
-- Tests
-  - Ajustados para injetar `NullLogger<T>.Instance` e novos testes de middlewares.
-
 ## 🔌 Endpoints e Estruturas
 
-Cabeçalhos comuns (opcional)
-- `X-Correlation-Id`: GUID/UUID para rastrear logs do request. Se não informado, a API gera e devolve no mesmo header.
+**Cabeçalhos comuns (opcional)**
+- `X-Correlation-Id`: GUID/UUID para rastrear logs do request. Se não informado, a API gera um e o devolve no mesmo header.
 
-Tabela de rotas
+**Tabela de rotas**
 
 | Método | Rota                                                        | Body (request)             | 200 OK (response)             |
 |--------|-------------------------------------------------------------|----------------------------|-------------------------------|
 | POST   | `api/Payment/SolicitacaoCompra`                             | `PaymentDto`               | `PaymentResponse`             |
 | POST   | `api/Payment/CancelarPagamento`                             | `PaymentRequestDto`        | `PaymentResponse`             |
-| PUT    | `api/Payment/AtualizarPagamento`                            | `Guid` (PaymentId)         | `void` (200)                  |
-| GET    | `api/Payment/ListarComprasUsuario/{paymentId}/{userId}`     | —                          | `Payment`                     |
 | GET    | `api/Payment/ConsultarPagamento/{paymentId}/{userId}`       | —                          | `PaymentResponse`             |
-| GET    | `api/Payment/PagamentoAnalise`                              | —                          | `List<Payment>`               |
+| GET    | `api/Payment/ListarComprasUsuario/{paymentId}/{userId}`     | —                          | `Payment`                     |
 | GET    | `api/PaymentEvents`                                         | —                          | `IEnumerable<PaymentEvent>`   |
 | GET    | `api/PaymentEvents/type/{eventType}`                        | —                          | `IEnumerable<PaymentEvent>`   |
-Estruturas
-- `PaymentDto`
+
+**Estruturas**
+
+- `PaymentDto` (solicitação de compra)
+  ```json
   {
+    "orderId": "GUID",
     "userId": "GUID",
     "currency": "BRL",
-    "items": [ { "jogoId": "GUID", "description": "string", "unitPrice": number, "quantity": number } ]
+    "items": [
+      {
+        "jogoId": "GUID",
+        "description": "string",
+        "unitPrice": number,
+        "quantity": number
+      }
+    ]
   }
-- `PaymentRequestDto`
+  ```
+
+- `PaymentRequestDto` (cancelamento)
+  ```json
   {
     "paymentId": "GUID",
-    "userId": "GUID",
-    "statusPayment": "string" // opcional
+    "userId": "GUID"
   }
-- `PaymentResponse`
+  ```
+
+- `PaymentResponse` (resposta padrão)
+  ```json
   {
+    "orderId": "GUID",
     "paymentId": "GUID",
     "statusPayment": "string",
     "success": true,
     "message": "string"
   }
-- `Payment`
+  ```
+
+- `Payment` (modelo de domínio completo)
+  ```json
   {
+    "orderId": "GUID",
     "paymentId": "GUID",
     "userId": "GUID",
     "currency": "string",
     "statusPayment": "string",
-    "items": [ { "paymentItemId": "GUID", "paymentId": "GUID", "jogoId": "GUID", "description": "string", "unitPrice": number, "quantity": number, "totalPrice": number } ],
+    "items": [
+      {
+        "paymentItemId": "GUID",
+        "paymentId": "GUID",
+        "jogoId": "GUID",
+        "description": "string",
+        "unitPrice": number,
+        "quantity": number,
+        "totalPrice": number
+      }
+    ],
     "totalAmount": number,
     "createdAt": "ISO-8601"
   }
+  ```
 
 ## 🧩 Eventos e Versionamento
-- Tipos de evento/status mapeados no domínio.
-- Criação de eventos descritivos (CONSULTA, ATUALIZACAO, CANCELED etc.).
-- Serviço de eventos controla versão e evita duplicidade consecutiva do mesmo tipo.
-- Heurística de status final por versão para simular progressão do pagamento.
-
-## ✅ Critérios de Aceite (resumo)
-- Solicitação de compra: 200 com `PaymentResponse`; evento inicial registrado.
-- Atualização: 200 e evento `ATUALIZACAO`; 404 quando não encontrar.
-- Consulta/Listagem: 200 e evento `CONSULTA`; 404 quando não encontrar.
-- Cancelamento: 200 com `CANCELED`; 400 em falhas; sem evento em erro.
+- Tipos de evento/status são mapeados no domínio (ex: `CONSULTA_SITUACAO`, `CANCELED`).
+- O serviço de eventos controla a versão para evitar a duplicação consecutiva do mesmo tipo de evento, simulando a progressão do status do pagamento.
 
 ## 🛠️ Comandos úteis
 - Rodar API: `dotnet run --project src/FCG.Pagamentos`
@@ -200,23 +162,22 @@ Estruturas
 
 ## 🧱 Migrations (EF Core)
 
-Pré‑requisito (opcional):
+**Pré‑requisito (opcional):**
 - `dotnet tool install --global dotnet-ef`
-- Verificar: `dotnet ef --version`
 
-Gerar uma nova migration (ex.: Initial):
+**Gerar uma nova migration:**
 - Na raiz do repositório:
-  - `dotnet ef migrations add Initial -p src/FCG.Pagamentos.Infra -s src/FCG.Pagamentos -c ApplicationDbContext`
+  ```bash
+  dotnet ef migrations add <NomeDaMigration> -p src/FCG.Pagamentos.Infra -s src/FCG.Pagamentos -c ApplicationDbContext
+  ```
 
-Atualizar o banco de dados:
-- `dotnet ef database update -p src/FCG.Pagamentos.Infra -s src/FCG.Pagamentos -c ApplicationDbContext`
-
-Observações:
-- `-p` aponta para o projeto da Infra (Migrations/DbContext).
-- `-s` aponta para o projeto de inicialização (API) que contém a connection string.
-- Ajuste a connection string em `src/FCG.Pagamentos/appsettings.json` ou via `ConnectionStrings__DefaultConnection`.
-
-
+**Atualizar o banco de dados:**
+- ```bash
+  dotnet ef database update -p src/FCG.Pagamentos.Infra -s src/FCG.Pagamentos -c ApplicationDbContext
+  ```
+- **Observações:**
+  - `-p` aponta para o projeto da Infra (onde ficam as Migrations e o DbContext).
+  - `-s` aponta para o projeto de inicialização (API), que contém a `connection string`.
 
 ## 👥 Idealizadores do Projeto (Discord)
 - 👨‍💻 Clovis Alceu Cassaro (`cloves_93258`)

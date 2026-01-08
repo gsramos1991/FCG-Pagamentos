@@ -17,7 +17,7 @@ public class PaymentTests
         var paymentId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var act = () => new Payment(paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
+        var act = () => new Payment(Guid.NewGuid(), paymentId, userId, "BRL", "PENDING", items, 10m, DateTime.UtcNow);
         act.Should().NotThrow();
     }
 
@@ -29,7 +29,7 @@ public class PaymentTests
             new PaymentItem(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Item 1", 5m, 2)
         };
 
-        Action act = () => new Payment(Guid.NewGuid(), Guid.NewGuid(), "BR", "PENDING", items, 10m, DateTime.UtcNow);
+        Action act = () => new Payment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "BR", "PENDING", items, 10m, DateTime.UtcNow);
         act.Should().Throw<ArgumentException>().WithMessage("*Currency*");
     }
 
@@ -37,7 +37,7 @@ public class PaymentTests
     public void Constructor_Should_Throw_When_Items_Empty()
     {
         var items = new List<PaymentItem>();
-        Action act = () => new Payment(Guid.NewGuid(), Guid.NewGuid(), "BRL", "PENDING", items, 0m, DateTime.UtcNow);
+        Action act = () => new Payment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "BR", "PENDING", items, 10m, DateTime.UtcNow);
         act.Should().Throw<ArgumentException>().WithMessage("*lista de items*");
     }
 }
