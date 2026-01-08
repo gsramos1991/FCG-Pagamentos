@@ -1,41 +1,54 @@
-# Multi-stage build para FCG.Pagamentos.API (.NET 8)
-
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.22-alpine3.23 AS base
+# ==========================================
+# 1. Estágio de Base (Runtime)
+# ==========================================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
 WORKDIR /app
 
-RUN apk add --no-cache icu-data-full icu-libs
+# Instala pacotes para globalização e fuso horário
+RUN apk add --no-cache \
+    icu-data-full \
+    icu-libs \
+    tzdata
 
-# Desativa o modo invariante nas variáveis de ambiente
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-
-#FROM mcr.microsoft.com/dotnet/sdk:8.0.416-azurelinux3.0-amd64 AS build
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine3.23 AS build
-
-WORKDIR /src
-
-# copia solution e csproj para melhor cache do restore
-COPY FCG.Pagamentos.sln ./
-COPY src/FCG.Pagamentos/FCG.Pagamentos.API.csproj src/FCG.Pagamentos/
-COPY src/FCG.Pagamentos.Business/FCG.Pagamentos.Business.csproj src/FCG.Pagamentos.Business/
-COPY src/FCG.Pagamentos.Core/FCG.Pagamentos.Core.csproj src/FCG.Pagamentos.Core/
-COPY src/FCG.Pagamentos.Infra/FCG.Pagamentos.Infra.csproj src/FCG.Pagamentos.Infra/
-
-# copiar o csproj dos testes
-COPY tests/FCG.Pagamentos.Tests/FCG.Pagamentos.Tests.csproj tests/FCG.Pagamentos.Tests/
-
-# restore da solução (agora encontra todos os projetos)
-RUN dotnet restore FCG.Pagamentos.sln
-
-# copia o restante do código
-COPY . .
-
-# publica o projeto API
-RUN dotnet publish src/FCG.Pagamentos/FCG.Pagamentos.API.csproj -c Release -o /app/out /p:UseAppHost=false
+# Configurações regionais e Timezone de Brasília
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false \
+    TZ=America/Sao_Paulo \
+    LC_ALL=pt_BR.UTF-8 \
+    LANG=pt_BR.UTF-8
 
 EXPOSE 8080
 
+# ==========================================
+# 2. Estágio de Build (SDK)
+# ==========================================
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+WORKDIR /src
+
+# Copia arquivos de projeto primeiro para cache de pacotes NuGet
+COPY ["FCG.Pagamentos.sln", "./"]
+COPY ["src/FCG.Pagamentos/FCG.Pagamentos.API.csproj", "src/FCG.Pagamentos/"]
+COPY ["src/FCG.Pagamentos.Business/FCG.Pagamentos.Business.csproj", "src/FCG.Pagamentos.Business/"]
+COPY ["src/FCG.Pagamentos.Core/FCG.Pagamentos.Core.csproj", "src/FCG.Pagamentos.Core/"]
+COPY ["src/FCG.Pagamentos.Infra/FCG.Pagamentos.Infra.csproj", "src/FCG.Pagamentos.Infra/"]
+COPY ["tests/FCG.Pagamentos.Tests/FCG.Pagamentos.Tests.csproj", "tests/FCG.Pagamentos.Tests/"]
+
+RUN dotnet restore "FCG.Pagamentos.sln"
+
+# Copia o código fonte e publica
+COPY . .
+RUN dotnet publish "src/FCG.Pagamentos/FCG.Pagamentos.API.csproj" \
+    -c Release \
+    -o /app/out \
+    --no-restore \
+    /p:UseAppHost=false
+
+# ==========================================
+# 3. Estágio Final (Produção)
+# ==========================================
 FROM base AS final
 WORKDIR /app
+
+# Copia os binários compilados
 COPY --from=build /app/out ./
 
 ENTRYPOINT ["dotnet", "FCG.Pagamentos.API.dll"]
